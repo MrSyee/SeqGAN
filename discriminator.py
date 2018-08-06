@@ -10,12 +10,12 @@ def linear(input_, output_size, scope=None):
     input_: a tensor or a list of 2D, batch x n, Tensors.
     output_size: int, second dimension of W[i].
     scope: VariableScope for the created subgraph; defaults to "Linear".
-  Returns:
-    A 2D Tensor with shape [batch x output_size] equal to
-    sum_i(input_[i] * W[i]), where W[i]s are newly created matrices.
-  Raises:
-    ValueError: if some of the arguments has unspecified or wrong shape.
-  '''
+    Returns:
+      A 2D Tensor with shape [batch x output_size] equal to
+      sum_i(input_[i] * W[i]), where W[i]s are newly created matrices.
+    Raises:
+      ValueError: if some of the arguments has unspecified or wrong shape.
+    '''
 
     shape = input_.get_shape().as_list()
     if len(shape) != 2:
@@ -30,6 +30,7 @@ def linear(input_, output_size, scope=None):
         bias_term = tf.get_variable("Bias", [output_size], dtype=input_.dtype)
 
     return tf.matmul(input_, tf.transpose(matrix)) + bias_term
+
 
 def highway(input_, size, num_layers=1, bias=-2.0, f=tf.nn.relu, scope='Highway'):
     """Highway Network (cf. http://arxiv.org/abs/1505.00387).
@@ -48,6 +49,7 @@ def highway(input_, size, num_layers=1, bias=-2.0, f=tf.nn.relu, scope='Highway'
             input_ = output
 
     return output
+
 
 class Discriminator(object):
     """
@@ -120,7 +122,7 @@ class Discriminator(object):
                 b = tf.Variable(tf.constant(0.1, shape=[num_classes]), name="b")
                 l2_loss += tf.nn.l2_loss(W)
                 l2_loss += tf.nn.l2_loss(b)
-                self.scores = tf.nn.xw_plus_b(self.h_drop, W, b, name="scores")
+                self.scores = tf.nn.xw_plus_b(self.h_drop, W, b, name="scores")  # Wx + b
                 self.ypred_for_auc = tf.nn.softmax(self.scores)
                 self.predictions = tf.argmax(self.scores, 1, name="predictions")
 
