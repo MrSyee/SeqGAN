@@ -3,6 +3,10 @@ from tensorflow.python.ops import tensor_array_ops, control_flow_ops
 
 
 class Generator(object):
+    '''
+    num_emb : vocab size
+    emb_dim : embedding size
+    '''
     def __init__(self, num_emb, batch_size, emb_dim, hidden_dim,
                  sequence_length, start_token,
                  learning_rate=0.01, reward_gamma=0.95):
@@ -22,7 +26,9 @@ class Generator(object):
         self.expected_reward = tf.Variable(tf.zeros([self.sequence_length]))
 
         with tf.variable_scope('generator'):
-            self.g_embeddings = tf.Variable(self.init_matrix([self.num_emb, self.emb_dim]))
+            # .vec 파일을 여기다가
+            # self.g_embeddings = tf.Variable(self.init_matrix([self.num_emb, self.emb_dim]))
+            self.g_embeddings = tf.placeholder([self.num_emb, self.emb_dim], dtype=tf.float16)
             self.g_params.append(self.g_embeddings)
             self.g_recurrent_unit = self.create_recurrent_unit(self.g_params)  # maps h_tm1 to h_t for generator
             self.g_output_unit = self.create_output_unit(self.g_params)  # maps h_t to o_t (output token logits)
@@ -48,10 +54,13 @@ class Generator(object):
             h_t = self.g_recurrent_unit(x_t, h_tm1)  # hidden_memory_tuple
             o_t = self.g_output_unit(h_t)  # batch x vocab , logits not prob
             log_prob = tf.log(tf.nn.softmax(o_t))
+            # 이전 token을 이용해 다음 token을 생성. (token : vocab index)
             next_token = tf.cast(tf.reshape(tf.multinomial(log_prob, 1), [self.batch_size]), tf.int32)
             x_tp1 = tf.nn.embedding_lookup(self.g_embeddings, next_token)  # batch x emb_dim
+            # next token에 대한 prob
             gen_o = gen_o.write(i, tf.reduce_sum(tf.multiply(tf.one_hot(next_token, self.num_emb, 1.0, 0.0),
                                                              tf.nn.softmax(o_t)), 1))  # [batch_size] , prob
+            # next token, 실제 출력값
             gen_x = gen_x.write(i, next_token)  # indices, batch_size
             return i + 1, x_tp1, h_t, gen_o, gen_x
 
